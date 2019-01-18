@@ -15,7 +15,7 @@ server.use(express.json());
 
 server.get('/api/users', async (req, res) => {
 
-  const loggedIn = false;
+  const loggedIn = true;
 
   if (!loggedIn) {
 
@@ -40,5 +40,44 @@ server.get('/api/users', async (req, res) => {
 
 });
 
+server.post('/api/register', async (req, res) => {
+
+  let { username, password } = req.body;
+
+  if (!username) {
+
+    res.status(400).json({message: 'Please provide a username'});
+    return;
+
+  }
+
+  if (!password) {
+
+    res.status(400).json({message: 'Please provide a password'});
+    return;
+
+  }
+
+  try {
+
+    // using async because it seems better. Two passes for speed/development
+    password = await bcrypt.hash(password, 2);
+
+    const [ id ] = await db.insert({ username, password }).into('users');
+
+    const user = await db.select('id', 'username').from('users').where({ id });
+
+    res.status(201).json(user);
+
+  }
+
+  catch (err) {
+
+    console.log(err);
+    res.status(500).json({err});
+
+  }
+
+});
 
 server.listen(port, () => console.log('server running'));
