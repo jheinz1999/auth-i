@@ -73,10 +73,56 @@ server.post('/api/register', async (req, res) => {
 
   catch (err) {
 
-    console.log(err);
-    res.status(500).json({err});
+    res.status(500).json({message: 'That username exists!'});
 
   }
+
+});
+
+server.post('/api/login', async (req, res) => {
+
+  let { username, password } = req.body;
+
+  if (!username) {
+
+    res.status(400).json({message: 'Please provide a username'});
+    return;
+
+  }
+
+  if (!password) {
+
+    res.status(400).json({message: 'Please provide a password'});
+    return;
+
+  }
+
+  try {
+
+    const user = await db.select().from('users').where({ username }).first();
+
+    if (user) {
+
+      const correct = await bcrypt.compare(password, user.password);
+
+      if (correct) {
+
+        res.status(200).json({message: 'authorized!'});
+        return;
+
+      }
+
+    }
+
+  }
+
+  catch (err) {
+
+    res.status(500).json(err);
+
+  }
+
+  res.status(401).json({message: 'Unauthorized'});
 
 });
 
