@@ -24,18 +24,27 @@ server.use(session({
   saveUninitialized: false
 }));
 
-// Should only send back data if user is authorized.
+// authorization middleware
 
-server.get('/api/users', async (req, res) => {
+const protected = (req, res, next) => {
 
-  const loggedIn = true;
+  if (req.session && req.session.userID) {
 
-  if (!loggedIn) {
-
-    res.status(401).json({message: 'You are not logged in!'});
-    return;
+    next();
 
   }
+
+  else {
+
+    res.status(401).json({message: 'You are not logged in!'});
+
+  }
+
+}
+
+// Should only send back data if user is authorized.
+
+server.get('/api/users', protected, async (req, res) => {
 
   try {
 
@@ -78,7 +87,7 @@ server.post('/api/register', async (req, res) => {
 
     const [ id ] = await db.insert({ username, password }).into('users');
 
-    const user = await db.select('id', 'username').from('users').where({ id });
+    const user = await db.select('id', 'username').from('users').where({ id }).first();
 
     req.session.userID = user.id;
 
