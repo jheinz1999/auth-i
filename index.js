@@ -1,6 +1,7 @@
 const express = require('express');
 const knex = require('knex');
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 
 const knexconfig = require('./knexfile');
 
@@ -10,6 +11,18 @@ const server = express();
 const port = process.env.PORT || 5000;
 
 server.use(express.json());
+
+server.use(session({
+  name: 'cool session',
+  secret: 'alksjdhwyuuwyer88904873402938',
+  cookie: {
+    maxAge: 1000000,
+    secure: false
+  },
+  httpOnly: true,
+  resave: false,
+  saveUninitialized: false
+}));
 
 // Should only send back data if user is authorized.
 
@@ -67,6 +80,8 @@ server.post('/api/register', async (req, res) => {
 
     const user = await db.select('id', 'username').from('users').where({ id });
 
+    req.session.userID = user.id;
+
     res.status(201).json(user);
 
   }
@@ -107,6 +122,7 @@ server.post('/api/login', async (req, res) => {
 
       if (correct) {
 
+        req.session.userID = user.id;
         res.status(200).json({message: 'authorized!'});
         return;
 
