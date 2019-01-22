@@ -2,6 +2,7 @@ const express = require('express');
 const knex = require('knex');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const cors = require('cors');
 
 const knexconfig = require('./knexfile');
 
@@ -11,6 +12,7 @@ const server = express();
 const port = process.env.PORT || 5000;
 
 server.use(express.json());
+server.use(cors());
 
 server.use(session({
   name: 'cool session',
@@ -27,6 +29,8 @@ server.use(session({
 // authorization middleware
 
 const protected = (req, res, next) => {
+
+  console.log(req.session);
 
   if (req.session && req.session.userID) {
 
@@ -87,7 +91,7 @@ server.post('/api/register', async (req, res) => {
 
     const [ id ] = await db.insert({ username, password }).into('users');
 
-    const user = await db.select('id', 'username').from('users').where({ id }).first();
+    const user = await db.select('id', 'username').from('users').where({ id }).first;
 
     req.session.userID = user.id;
 
