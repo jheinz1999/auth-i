@@ -1,6 +1,7 @@
 const express = require('express');
 const knex = require('knex');
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 
 const knexconfig = require('./knexfile');
 
@@ -11,18 +12,39 @@ const port = process.env.PORT || 5000;
 
 server.use(express.json());
 
-// Should only send back data if user is authorized.
+server.use(session({
+  name: 'cool session',
+  secret: 'alksjdhwyuuwyer88904873402938',
+  cookie: {
+    maxAge: 1000000,
+    secure: false
+  },
+  httpOnly: true,
+  resave: false,
+  saveUninitialized: false
+}));
 
-server.get('/api/users', async (req, res) => {
+// authorization middleware
 
-  const loggedIn = true;
+const protected = (req, res, next) => {
 
-  if (!loggedIn) {
+  if (req.session && req.session.userID) {
 
-    res.status(401).json({message: 'You are not logged in!'});
-    return;
+    next();
 
   }
+
+  else {
+
+    res.status(401).json({message: 'You are not logged in!'});
+
+  }
+
+}
+
+// Should only send back data if user is authorized.
+
+server.get('/api/users', protected, async (req, res) => {
 
   try {
 
@@ -65,7 +87,9 @@ server.post('/api/register', async (req, res) => {
 
     const [ id ] = await db.insert({ username, password }).into('users');
 
-    const user = await db.select('id', 'username').from('users').where({ id });
+    const user = await db.select('id', 'username').from('users').where({ id }).first();
+
+    req.session.userID = user.id;
 
     res.status(201).json(user);
 
@@ -107,6 +131,7 @@ server.post('/api/login', async (req, res) => {
 
       if (correct) {
 
+        req.session.userID = user.id;
         res.status(200).json({message: 'authorized!'});
         return;
 
