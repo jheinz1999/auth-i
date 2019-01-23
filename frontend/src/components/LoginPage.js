@@ -1,5 +1,8 @@
 import React from 'react';
 import axios from 'axios';
+import cookie from 'react-cookie';
+
+axios.defaults.withCredentials = true;
 
 export default class LoginPage extends React.Component {
 

@@ -1,6 +1,8 @@
 import React from 'react';
 import axios from 'axios';
 
+axios.defaults.withCredentials = true;
+
 export default class HomePage extends React.Component {
 
   state = {
@@ -15,6 +17,18 @@ export default class HomePage extends React.Component {
     axios.get('http://localhost:5000/api/users')
       .then(res => this.setState({res: res, authenticated: true}))
       .catch(err => this.setState({authenticated: false}));
+
+  }
+
+  logout() {
+
+    /*window.browser.cookies.remove({
+      name: 'cool session',
+      url: 'localhost'
+    });*/
+
+    axios.get('http://localhost:5000/api/logout')
+      .then(res => this.setState({authenticated: false}));
 
   }
 
@@ -33,8 +47,18 @@ export default class HomePage extends React.Component {
 
     }
 
-    if (authenticated)
-      return <h1>Logged in!</h1>
+    if (authenticated) {
+      return (
+
+        <>
+
+          <h1>Logged in!</h1>
+          <button onClick={() => this.logout()}>Log Out</button>
+
+        </>
+
+      );
+    }
 
     return <p>test</p>
 
