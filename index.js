@@ -2,6 +2,7 @@ const express = require('express');
 const knex = require('knex');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const cors = require('cors');
 
 const knexconfig = require('./knexfile');
 
@@ -11,22 +12,27 @@ const server = express();
 const port = process.env.PORT || 5000;
 
 server.use(express.json());
+server.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 
 server.use(session({
   name: 'cool session',
   secret: 'alksjdhwyuuwyer88904873402938',
   cookie: {
     maxAge: 1000000,
-    secure: false
+    secure: false,
+    sameSite: true
   },
-  httpOnly: true,
+  httpOnly: false,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  sameSite: true
 }));
 
 // authorization middleware
 
 const protected = (req, res, next) => {
+
+  console.log(req.session);
 
   if (req.session && req.session.userID) {
 
@@ -148,6 +154,23 @@ server.post('/api/login', async (req, res) => {
   }
 
   res.status(401).json({message: 'Unauthorized'});
+
+});
+
+server.get('/api/logout', (req, res) => {
+
+  if (req.session) {
+
+    req.session.destroy(err => {
+
+      res.status(200).json({message: 'success!'});
+      return;
+
+    });
+
+  }
+
+  res.status(500).json({message: 'error'});
 
 });
 
